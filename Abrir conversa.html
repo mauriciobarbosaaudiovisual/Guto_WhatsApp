@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conversa Mirela e Guto</title>
+  <style>
+    :root {
+      --bg: #0b141a;
+      --panel: #111b21;
+      --header: #202c33;
+      --chat-bg: #0b141a;
+      --bubble-left: #202c33;
+      --bubble-right: #005c4b;
+      --text: #e9edef;
+      --muted: #8696a0;
+      --date: #182229;
+      --shadow: rgba(0,0,0,.25);
+      --input: #233138;
+      --check: #53bdeb;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      background: var(--panel);
+      border-right: 1px solid #2a3942;
+      display: flex;
+      flex-direction: column;
+      min-width: 320px;
+    }
+
+    .sidebar-top {
+      background: var(--header);
+      padding: 14px 16px;
+      font-weight: 600;
+      border-bottom: 1px solid #2a3942;
+    }
+
+    .sidebar-body {
+      padding: 16px;
+      overflow: auto;
+      display: grid;
+      gap: 14px;
+    }
+
+    .card {
+      background: #111b21;
+      border: 1px solid #2a3942;
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 8px 24px var(--shadow);
+    }
+
+    .btn, .file-label {
+      background: #00a884;
+      color: #001b17;
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+      width: 100%;
+    }
+
+    .btn.secondary {
+      background: #233138;
+      color: var(--text);
+    }
+
+    input[type="file"] { display: none; }
+
+    .small {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .status {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    .chat-shell {
+      display: flex;
+      flex-direction: column;
+      background: var(--chat-bg);
+      min-width: 0;
+    }
+
+    .chat-header {
+      height: 59px;
+      background: var(--header);
+      border-bottom: 1px solid #2a3942;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #6b7c85;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      color: white;
+      flex: 0 0 auto;
+    }
+
+    .chat-title {
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .chat-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .chat-area {
+      flex: 1;
+      overflow: auto;
+      padding: 18px 22px 28px;
+      background-image:
+        linear-gradient(rgba(11,20,26,.88), rgba(11,20,26,.88)),
+        radial-gradient(circle at 25% 25%, rgba(255,255,255,.02), transparent 18%),
+        radial-gradient(circle at 75% 75%, rgba(255,255,255,.02), transparent 18%);
+      background-size: cover;
+    }
+
+    .date-chip {
+      width: fit-content;
+      margin: 14px auto 18px;
+      padding: 7px 12px;
+      border-radius: 8px;
+      background: var(--date);
+      color: #d1d7db;
+      font-size: 12px;
+      box-shadow: 0 1px 1px var(--shadow);
+    }
+
+    .msg-row {
+      display: flex;
+      margin: 2px 0;
+    }
+
+    .msg-row.left { justify-content: flex-start; }
+    .msg-row.right { justify-content: flex-end; }
+
+    .bubble {
+      max-width: min(78%, 720px);
+      border-radius: 7.5px;
+      padding: 6px 8px 18px;
+      position: relative;
+      box-shadow: 0 1px 1px var(--shadow);
+      word-break: break-word;
+    }
+
+    .bubble.left { background: var(--bubble-left); }
+    .bubble.right { background: var(--bubble-right); }
+
+    .bubble .sender {
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #f15c6d;
+      display: none;
+    }
+
+    .bubble .text {
+      white-space: pre-wrap;
+      line-height: 1.45;
+      font-size: 14.2px;
+      color: var(--text);
+    }
+
+    .time {
+      position: absolute;
+      right: 8px;
+      bottom: 4px;
+      font-size: 11px;
+      color: rgba(233,237,239,.72);
+      display: inline-flex;
+      gap: 3px;
+      align-items: center;
+    }
+
+    .checks { color: var(--check); font-size: 11px; }
+
+    .media-wrap {
+      display: grid;
+      gap: 6px;
+    }
+
+    .media-wrap img,
+    .media-wrap video {
+      max-width: 100%;
+      border-radius: 8px;
+      display: block;
+    }
+
+    .audio-card {
+      min-width: 260px;
+      max-width: 360px;
+      padding-right: 54px;
+    }
+
+    .audio-card audio {
+      width: 100%;
+      height: 36px;
+      display: block;
+      filter: saturate(.95);
+    }
+
+    .doc-chip {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.06);
+      font-size: 13px;
+      max-width: 100%;
+    }
+
+    .empty {
+      max-width: 520px;
+      margin: 48px auto;
+      text-align: center;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .search {
+      width: 100%;
+      background: var(--input);
+      border: 1px solid #2a3942;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 12px 14px;
+      outline: 0;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .stat {
+      background: #0f171c;
+      border: 1px solid #22313a;
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .stat b {
+      display: block;
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+
+    @media (max-width: 960px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { min-width: 0; }
+      .chat-area { padding: 14px 10px 22px; }
+      .bubble { max-width: 88%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar-top">Conversa Mirela e Guto</div>
+      <div class="sidebar-body">
+        <div class="card">
+          <label class="file-label" for="folderInput">Selecionar pasta exportada</label>
+          <input id="folderInput" type="file" webkitdirectory directory multiple>
+          <div class="small" style="margin-top:10px;">
+            Selecione a pasta extraída do export do WhatsApp contendo o arquivo <b>_chat.txt</b> e todas as mídias.
+          </div>
+        </div>
+
+        <div class="card">
+          <input id="searchInput" class="search" placeholder="Buscar texto na conversa">
+          <div class="small" style="margin-top:10px;">A busca filtra as mensagens na tela.</div>
+        </div>
+
+        <div class="card">
+          <div class="stats">
+            <div class="stat"><b id="countMsgs">0</b><span class="small">mensagens</span></div>
+            <div class="stat"><b id="countMedia">0</b><span class="small">mídias</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div id="status" class="status">Aguardando a seleção da pasta.</div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="chat-shell">
+      <div class="chat-header">
+        <div class="avatar">G</div>
+        <div>
+          <div class="chat-title">Guto</div>
+          <div class="chat-subtitle">reconstrução visual da conversa</div>
+        </div>
+      </div>
+      <div id="chatArea" class="chat-area">
+        <div class="empty">
+          Selecione a pasta exportada do WhatsApp à esquerda.<br>
+          O visualizador vai reconstruir a linha do tempo com textos, áudios, fotos e vídeos.
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const folderInput = document.getElementById('folderInput');
+    const chatArea = document.getElementById('chatArea');
+    const statusEl = document.getElementById('status');
+    const searchInput = document.getElementById('searchInput');
+    const countMsgs = document.getElementById('countMsgs');
+    const countMedia = document.getElementById('countMedia');
+
+    let allMessages = [];
+    let mediaMap = new Map();
+
+    const linePattern = /^\[(\d{2}\/\d{2}\/\d{4}),\s(\d{2}:\d{2}:\d{2})\]\s([^:]+):\s([\s\S]*)$/;
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function normalizeSender(name) {
+      return (name || '').trim();
+    }
+
+    function isMe(sender) {
+      const s = sender.toLowerCase();
+      return s.includes('mirela');
+    }
+
+    function formatTime(hms) {
+      return hms.slice(0,5);
+    }
+
+    function parseChat(text) {
+      const lines = text.split(/\r?\n/);
+      const messages = [];
+      let current = null;
+
+      for (const rawLine of lines) {
+        const line = rawLine || '';
+        const match = line.match(linePattern);
+        if (match) {
+          if (current) messages.push(current);
+          current = {
+            date: match[1],
+            time: match[2],
+            sender: normalizeSender(match[3]),
+            text: match[4] || ''
+          };
+        } else if (current) {
+          current.text += '\n' + line;
+        }
+      }
+
+      if (current) messages.push(current);
+      return messages;
+    }
+
+    function detectMedia(text) {
+      for (const [name, file] of mediaMap.entries()) {
+        if (text.includes(name)) {
+          const lower = name.toLowerCase();
+          const url = URL.createObjectURL(file);
+          if (/\.(jpg|jpeg|png|gif|webp)$/i.test(lower)) return { type: 'image', url, name };
+          if (/\.(mp4|mov|webm|m4v)$/i.test(lower)) return { type: 'video', url, name };
+          if (/\.(opus|mp3|m4a|aac|wav|ogg)$/i.test(lower)) return { type: 'audio', url, name };
+          return { type: 'file', url, name };
+        }
+      }
+      return null;
+    }
+
+    function renderMessage(msg) {
+      const row = document.createElement('div');
+      row.className = 'msg-row ' + (isMe(msg.sender) ? 'right' : 'left');
+
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble ' + (isMe(msg.sender) ? 'right' : 'left');
+
+      const media = detectMedia(msg.text);
+
+      if (media) {
+        const wrap = document.createElement('div');
+        wrap.className = 'media-wrap';
+
+        if (media.type === 'image') {
+          const img = document.createElement('img');
+          img.src = media.url;
+          img.alt = media.name;
+          wrap.appendChild(img);
+        } else if (media.type === 'video') {
+          const video = document.createElement('video');
+          video.src = media.url;
+          video.controls = true;
+          video.preload = 'metadata';
+          wrap.appendChild(video);
+        } else if (media.type === 'audio') {
+          wrap.className = 'media-wrap audio-card';
+          const audio = document.createElement('audio');
+          audio.src = media.url;
+          audio.controls = true;
+          audio.preload = 'metadata';
+          wrap.appendChild(audio);
+        } else {
+          const chip = document.createElement('div');
+          chip.className = 'doc-chip';
+          chip.textContent = media.name;
+          wrap.appendChild(chip);
+        }
+
+        const captionOnly = msg.text.replace(media.name, '').trim();
+        if (captionOnly) {
+          const caption = document.createElement('div');
+          caption.className = 'text';
+          caption.textContent = captionOnly;
+          wrap.appendChild(caption);
+        }
+
+        bubble.appendChild(wrap);
+      } else {
+        const text = document.createElement('div');
+        text.className = 'text';
+        text.textContent = msg.text;
+        bubble.appendChild(text);
+      }
+
+      const time = document.createElement('div');
+      time.className = 'time';
+      time.innerHTML = `${formatTime(msg.time)}${isMe(msg.sender) ? ' <span class="checks">✓✓</span>' : ''}`;
+      bubble.appendChild(time);
+
+      row.appendChild(bubble);
+      return row;
+    }
+
+    function render(messages) {
+      chatArea.innerHTML = '';
+      if (!messages.length) {
+        chatArea.innerHTML = '<div class="empty">Nenhuma mensagem encontrada para este filtro.</div>';
+        return;
+      }
+
+      let lastDate = null;
+      for (const msg of messages) {
+        if (msg.date !== lastDate) {
+          const chip = document.createElement('div');
+          chip.className = 'date-chip';
+          chip.textContent = msg.date;
+          chatArea.appendChild(chip);
+          lastDate = msg.date;
+        }
+        chatArea.appendChild(renderMessage(msg));
+      }
+    }
+
+    function updateStats(messages) {
+      countMsgs.textContent = String(messages.length);
+      let mediaCount = 0;
+      for (const msg of messages) if (detectMedia(msg.text)) mediaCount++;
+      countMedia.textContent = String(mediaCount);
+    }
+
+    function applySearch() {
+      const q = searchInput.value.trim().toLowerCase();
+      if (!q) {
+        render(allMessages);
+        updateStats(allMessages);
+        return;
+      }
+      const filtered = allMessages.filter(m =>
+        (m.sender || '').toLowerCase().includes(q) ||
+        (m.text || '').toLowerCase().includes(q) ||
+        (m.date || '').includes(q)
+      );
+      render(filtered);
+      updateStats(filtered);
+    }
+
+    searchInput.addEventListener('input', applySearch);
+
+    folderInput.addEventListener('change', async (event) => {
+      const files = Array.from(event.target.files || []);
+      if (!files.length) return;
+
+      mediaMap = new Map();
+      let chatFile = null;
+
+      for (const file of files) {
+        mediaMap.set(file.name, file);
+        if (file.name.toLowerCase() === '_chat.txt') chatFile = file;
+      }
+
+      if (!chatFile) {
+        statusEl.textContent = 'Arquivo _chat.txt não encontrado na pasta selecionada.';
+        chatArea.innerHTML = '<div class="empty">Selecione a pasta correta do export do WhatsApp.</div>';
+        countMsgs.textContent = '0';
+        countMedia.textContent = '0';
+        return;
+      }
+
+      statusEl.textContent = 'Lendo o arquivo e reconstruindo a conversa...';
+
+      try {
+        const txt = await chatFile.text();
+        allMessages = parseChat(txt);
+        render(allMessages);
+        updateStats(allMessages);
+        statusEl.textContent = `Conversa carregada com sucesso. ${allMessages.length} mensagens identificadas.`;
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = 'Erro ao ler o arquivo da conversa.';
+        chatArea.innerHTML = '<div class="empty">Não foi possível reconstruir a conversa.</div>';
+      }
+    });
+  </script>
+</body>
+</html>
