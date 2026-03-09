@@ -19,7 +19,7 @@ margin:auto;
 }
 
 .msg{
-margin:8px 0;
+margin:10px 0;
 padding:10px;
 border-radius:8px;
 max-width:70%;
@@ -34,69 +34,50 @@ background:#DCF8C6;
 margin-left:auto;
 }
 
-.date{
-text-align:center;
-margin:20px;
-font-size:12px;
-background:#ddd;
-display:inline-block;
-padding:5px 10px;
-border-radius:6px;
-}
-
-img,video{
-max-width:100%;
-border-radius:8px;
-}
-
-audio{
-width:100%;
-}
-
 </style>
 
 </head>
 
 <body>
 
-<div class="chat" id="chat"></div>
+<h2>Conversa Mirela e Guto</h2>
+
+<div id="chat" class="chat"></div>
 
 <script>
 
-fetch('_chat.txt')
+fetch("_chat.txt")
 .then(r=>r.text())
 .then(text=>{
 
-let lines=text.split("\n");
-let chat=document.getElementById("chat");
+let chat=document.getElementById("chat")
 
-lines.forEach(line=>{
+text.split("\n").forEach(line=>{
 
-let match=line.match(/[(.?)] (.?): (.*)/);
+let m=line.match(/[(.?)] (.?): (.*)/)
 
-if(match){
+if(m){
 
-let date=match[1];
-let name=match[2];
-let msg=match[3];
+let name=m[2]
+let msg=m[3]
 
-let div=document.createElement("div");
+let div=document.createElement("div")
 
 if(name.toLowerCase().includes("mirela")){
-div.className="msg right";
+div.className="msg right"
 }else{
-div.className="msg left";
+div.className="msg left"
 }
 
-div.innerHTML="<b>"+name+"</b><br>"+msg;
+div.innerHTML="<b>"+name+"</b><br>"+msg
 
-chat.appendChild(div);
+chat.appendChild(div)
 
 }
 
-});
+})
 
-});
+})
 
 </script>
 
