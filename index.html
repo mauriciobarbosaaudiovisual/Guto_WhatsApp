@@ -54,7 +54,7 @@ let chat=document.getElementById("chat")
 
 text.split("\n").forEach(line=>{
 
-let m=line.match(/[(.?)] (.?): (.*)/)
+let m=line.match(/\[(.*?), (.*?)\] (.*?): (.*)/)
 
 if(m){
 
